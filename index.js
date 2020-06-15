@@ -1,15 +1,17 @@
 const path = require('path');
 const fs = require('fs');
+const process = require('process');
 // const inquirer = require('inquirer');
 
-const projectConfigPath = path.resolve(__dirname, '../project.config.json');
+const crtPath = process.cwd();
+const projectConfigPath = path.resolve(crtPath, '../project.config.json');
 const projectConfigJson = getJson(projectConfigPath);
 const { miniprogramRoot, condition } = projectConfigJson;
-const appPath = path.resolve(__dirname, '..', miniprogramRoot, './app.json');
+const appPath = path.resolve(crtPath, '..', miniprogramRoot, './app.json');
 const appJson = getJson(appPath);
-const configPath = path.resolve(__dirname, './config.json');
+const configPath = path.resolve(crtPath, './config.json');
 const configJson = getJson(configPath);
-const distPath = path.resolve(__dirname, './dist');
+const distPath = path.resolve(crtPath, './dist');
 
 const { pages, subpackages, preloadRule } = appJson;
 const conditionPages = condition.miniprogram.list;
