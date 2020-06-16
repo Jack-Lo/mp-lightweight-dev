@@ -1,5 +1,6 @@
 {
-  "switch": "off",
+  "switch": "on",
   "pages": [],
-  "subpackages": []
+  "subpackages": [],
+  "miniprogramRoot": "client/"
 }
