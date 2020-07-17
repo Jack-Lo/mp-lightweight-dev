@@ -1,6 +1,4 @@
 {
-  "switch": "on",
-  "pages": [],
-  "subpackages": [],
-  "miniprogramRoot": "client/"
+  "projectConfigPath": "./project.config.json",
+  "devDist": "./client_dev"
 }
