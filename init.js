@@ -5,6 +5,7 @@ const {
   getConfig,
   getProjectConfig,
   getAppConfig,
+  getAppConfigPath,
 } = require("./utils.js");
 
 try {
@@ -15,7 +16,7 @@ try {
 }
 
 function getExcludePagesMap() {
-  const { pages, subpackages } = getAppConfig();
+  const { pages, subpackages, tabBar } = getAppConfig();
   const subpackagesMap = subpackages.reduce((pV, cV) => {
     pV[cV.root] = cV.pages;
     return pV;
@@ -27,7 +28,7 @@ function getExcludePagesMap() {
   const config = getConfig();
   const includePagesMap = Array.prototype.concat
     .apply(
-      config.pages || [],
+      (config.pages || []).concat(tabBar.list.map(t => t.pagePath)),
       (config.subpackages || []).map((root) =>
         subpackagesMap[root].map((p) => `${root}/${p}`)
       )
@@ -39,14 +40,23 @@ function getExcludePagesMap() {
   const { miniprogramRoot } = getProjectConfig();
   const excludePagesMap = allPages.reduce((pV, cV) => {
     if (!includePagesMap[cV]) {
-      ['wxml', 'js', 'wxss', 'json'].forEach(s => {
-        const p = path.resolve(crtDir, config.projectConfigPath, '..', miniprogramRoot, `./${cV}.${s}`);
+      ["wxml", "js", "wxss", "json"].forEach((s) => {
+        const p = path.resolve(
+          crtDir,
+          config.projectConfigPath,
+          "..",
+          miniprogramRoot,
+          `./${cV}.${s}`
+        );
         pV[p] = true;
       });
     }
     return pV;
   }, {});
-  return excludePagesMap;
+  return {
+    includeMap: includePagesMap,
+    excludeMap: excludePagesMap,
+  };
 }
 
 /**
@@ -56,13 +66,13 @@ function mirrorFiles() {
   const { devDist } = getConfig();
   const { miniprogramRoot } = getProjectConfig();
   fs.removeSync(path.resolve(crtDir, devDist));
-  const excludePagesMap = getExcludePagesMap();
+  const { includeMap, excludeMap } = getExcludePagesMap();
   fs.copy(
     path.resolve(crtDir, miniprogramRoot),
     path.resolve(crtDir, devDist),
     {
       filter(src) {
-        if (excludePagesMap[src]) {
+        if (excludeMap[src]) {
           return false;
         }
         return true;
@@ -70,7 +80,19 @@ function mirrorFiles() {
     }
   )
     .then(() => {
-      console.error("mirror files done.");
+      console.log("mirror files done.");
+      const pages = Object.keys(includeMap);
+      return fs.writeJSON(getAppConfigPath(true), {
+        ...getAppConfig(),
+        subpackages: [],
+        preloadRule: {},
+        pages,
+      }, {
+        spaces: 2,
+      })
+        .then(() => {
+          console.log("modify app.json done.");
+        });
     })
     .catch(console.error);
 }

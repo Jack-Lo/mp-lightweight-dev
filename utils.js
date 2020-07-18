@@ -43,6 +43,21 @@ function getProjectConfig(force = false) {
 }
 
 /**
+ * 获取app.json路径
+ * @param {boolen} dev 是否开发目录
+ */
+function getAppConfigPath(dev = false) {
+  const miniprogramRoot = dev ? config.devDist : projectConfig.miniprogramRoot;
+  return path.resolve(
+    crtDir,
+    config.projectConfigPath,
+    "..",
+    miniprogramRoot,
+    "./app.json"
+  );
+}
+
+/**
  * 获取app.json信息
  * @param {boolen} force 强制更新
  */
@@ -50,13 +65,7 @@ function getAppConfig(force = false) {
   if (appConfig && !force) {
     return appConfig;
   }
-  const appConfigPath = path.resolve(
-    crtDir,
-    config.projectConfigPath,
-    "..",
-    projectConfig.miniprogramRoot,
-    "./app.json"
-  );
+  const appConfigPath = getAppConfigPath();
   appConfig = fs.readJSONSync(appConfigPath);
   return appConfig;
 }
@@ -67,4 +76,5 @@ module.exports = {
   getConfig,
   getProjectConfig,
   getAppConfig,
+  getAppConfigPath,
 };
