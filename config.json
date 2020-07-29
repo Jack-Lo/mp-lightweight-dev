@@ -1,4 +1,5 @@
 {
   "projectConfigPath": "./project.config.json",
-  "devDist": "./client_dev"
+  "devDist": "./client_dev",
+  "miniprogramRoot": "./client"
 }

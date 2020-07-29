@@ -1,5 +1,6 @@
 const fs = require("fs-extra");
 const path = require("path");
+const watch = require('watch');
 const {
   crtDir,
   getConfig,
@@ -37,7 +38,6 @@ function getExcludePagesMap() {
       pV[cV] = true;
       return pV;
     }, {});
-  const { miniprogramRoot } = getProjectConfig();
   const excludePagesMap = allPages.reduce((pV, cV) => {
     if (!includePagesMap[cV]) {
       ["wxml", "js", "wxss", "json"].forEach((s) => {
@@ -45,7 +45,7 @@ function getExcludePagesMap() {
           crtDir,
           config.projectConfigPath,
           "..",
-          miniprogramRoot,
+          config.miniprogramRoot,
           `./${cV}.${s}`
         );
         pV[p] = true;
@@ -62,9 +62,8 @@ function getExcludePagesMap() {
 /**
  * 镜像同步文件
  */
-function mirrorFiles() {
-  const { devDist } = getConfig();
-  const { miniprogramRoot } = getProjectConfig();
+function monitorFiles() {
+  const { miniprogramRoot, devDist } = getConfig();
   fs.removeSync(path.resolve(crtDir, devDist));
   const { includeMap, excludeMap } = getExcludePagesMap();
   fs.copy(
@@ -80,7 +79,7 @@ function mirrorFiles() {
     }
   )
     .then(() => {
-      console.log("mirror files done.");
+      console.log("monitor files done.");
       const pages = Object.keys(includeMap);
       return fs.writeJSON(getAppConfigPath(true), {
         ...getAppConfig(),
@@ -92,9 +91,35 @@ function mirrorFiles() {
       })
         .then(() => {
           console.log("modify app.json done.");
+          watchFiles(path.resolve(crtDir, miniprogramRoot), src => {
+            if (excludeMap[src]) {
+              return false;
+            }
+            return true;
+          });
         });
     })
     .catch(console.error);
 }
 
-mirrorFiles();
+monitorFiles();
+
+/**
+ * 监控文件变化
+ */
+function watchFiles(root, filter) {
+  watch.createMonitor(root, { filter }, monitor => {
+    monitor.on('created', (f, stat) => {
+      // Handle new files
+      console.log('created:', f);
+    });
+    monitor.on('changed', (f, curr, prev) => {
+      // Handle file changes
+      console.log('changed:', f);
+    });
+    monitor.on('removed', (f, stat) => {
+      // Handle removed files
+      console.log('removed:', f);
+    });
+  });
+}
